@@ -17,7 +17,7 @@ class QRView extends StatefulWidget {
 
   static Future<bool> requestCameraPermission() async {
     try {
-      var permissions =  await _channel.invokeMethod('requestPermissions');
+      var permissions = await _channel.invokeMethod('requestPermissions');
       return permissions;
     } on PlatformException {
       return false;
@@ -123,6 +123,7 @@ class QRViewController {
     PermissionSetCallback onPermissionSet,
     bool showNativeAlertDialogOnError,
   ) : _channel = MethodChannel('net.touchcapture.qr.flutterqr/qrview_$id') {
+    updateDimensions(qrKey);
     _channel.setMethodCallHandler(
       (call) async {
         var args = call.arguments;
@@ -133,7 +134,7 @@ class QRViewController {
             }
             break;
           case permissionMethodCall:
-            await getSystemFeatures(); // if we have no permission all features will not be avaible
+            await getSystemFeatures(); // if we have no permission all features will not be available
             if (args != null) {
               if (args as bool) {
                 _cameraActive = true;
@@ -260,5 +261,13 @@ class QRViewController {
 
   void dispose() {
     _scanUpdateController.close();
+  }
+
+  void updateDimensions(GlobalKey key) {
+    if (defaultTargetPlatform == TargetPlatform.iOS) {
+      final RenderBox renderBox = key.currentContext.findRenderObject();
+      _channel.invokeMethod('setDimensions',
+          {'width': renderBox.size.width, 'height': renderBox.size.height});
+    }
   }
 }
